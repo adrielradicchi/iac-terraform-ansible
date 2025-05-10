@@ -21,8 +21,13 @@
         - /home/ubuntu/manage.py
         - /home/ubuntu/setup
       ignore_errors: yes
-    - name: Start project
+    - name: Checking if started project
+      stat:
+        path: /home/ubuntu/setup/settings.py
+      register: python_project
+    - name: Starting project
       shell: ". /home/ubuntu/venv/bin/activate; django-admin startproject setup /home/ubuntu/"
+      when: not python_project.stat.exists
     - name: Changing hosts settings
       lineinfile:
         path: /home/ubuntu/setup/settings.py
