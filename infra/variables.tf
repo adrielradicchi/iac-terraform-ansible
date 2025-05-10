@@ -14,3 +14,14 @@ variable "security_group" {
   type = string
 }
 
+variable "name_group" {
+  type = string
+}
+
+variable "min_size" {
+  type = number
+}
+
+variable "max_size" {
+  type = number
+}
