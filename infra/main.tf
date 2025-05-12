@@ -25,8 +25,6 @@ resource "aws_launch_template" "machine" {
   tags = {
     Name = "${var.key} - Terraform Ansible"
   }
-
-  target_group_arns = [ aws_lb_target_group.target_group_lb.arn ] 
 }
 
 resource "aws_key_pair" "chaveSSH" {
@@ -45,6 +43,7 @@ resource "aws_autoscaling_group" "group" {
   availability_zones = [ "${var.region_aws}a", "${var.region_aws}b" ]
   # desired_capacity = var.desired_capacity
   # vpc_zone_identifier = [var.subnet_id]
+  target_group_arns = [ aws_lb_target_group.target_group_lb.arn ]
 }
 
 resource "aws_default_subnet" "subnet_1" {
@@ -79,7 +78,6 @@ resource "aws_lb_listener" "listener_lb" {
 
 resource "aws_default_vpc" "default" {
 }
-
 
 # output "Public_IP" {
 #   value = aws_instance.app_server.public_ip

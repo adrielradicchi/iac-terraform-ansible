@@ -9,7 +9,6 @@ module "aws-prod" {
   name_group = "Production"
 }
 
-
 # output "IP" {
 #   value = module.aws-prod.Public_IP
 # }
