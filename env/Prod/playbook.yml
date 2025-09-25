@@ -1,39 +1,73 @@
 - hosts: terraform-ansible
+  become: true
   tasks:
-    - name: Install python 3, setuptools and virtualenv
-      apt:
-        pkg:
-          - python3
-          - python3-setuptools
-          - virtualenv
-        update_cache: yes
-      become: yes
-    - name: Remove old project
-      file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /home/ubuntu/test
-      ignore_errors: yes
-    - name: Git Clone
-      ansible.builtin.git:
-        repo: https://github.com/guilhermeonrails/clientes-leo-api.git
-        dest: /home/ubuntu/test
-        version: master
-        force: yes
-    - name: Dependencies install with pip (Django and Django Rest)
-      pip:
-        virtualenv: /home/ubuntu/venv
-        requirements: /home/ubuntu/test/requirements.txt
-    - name: Changing hosts settings
-      lineinfile:
-        path: /home/ubuntu/test/setup/settings.py
-        regexp: "ALLOWED_HOSTS"
-        line: 'ALLOWED_HOSTS = ["*"]'
-        backrefs: yes
-    - name: Run migrates on database
-      shell: ". /home/ubuntu/venv/bin/activate; python /home/ubuntu/test/manage.py migrate"
-    - name: Load inicial data
-      shell: ". /home/ubuntu/venv/bin/activate; python /home/ubuntu/test/manage.py loaddata clientes.json"
-    - name: Start server
-      shell: ". /home/ubuntu/venv/bin/activate; nohup python /home/ubuntu/test/manage.py runserver 0.0.0.0:8000 &"
+  - name: Install python 3, setuptools and virtualenv
+    apt:
+      name:
+      - python3
+      - python3-venv
+      - python3-pip
+      - python3-setuptools
+      update_cache: yes
+      state: present
+
+  - name: Remove old project
+    file:
+      path: "{{ item }}"
+      state: absent
+    loop:
+    - /home/ubuntu/test
+    ignore_errors: true
+    become_user: ubuntu
+
+  - name: Git Clone
+    ansible.builtin.git:
+      repo: https://github.com/guilhermeonrails/clientes-leo-api.git
+      dest: /home/ubuntu/test
+      version: master
+      clone: yes
+      force: yes
+    become_user: ubuntu
+
+  - name: Create virtualenv (if not exists)
+    command: python3 -m venv /home/ubuntu/venv
+    args:
+      creates: /home/ubuntu/venv/bin/activate
+    become_user: ubuntu
+
+  - name: Upgrade pip inside virtualenv
+    command: /home/ubuntu/venv/bin/pip install --upgrade pip
+    become_user: ubuntu
+
+  - name: Add new lib to requirements.txt
+    shell: 'echo "setuptools==80.9.0" >> /home/ubuntu/test/requirements.txt'
+    become_user: ubuntu
+
+  - name: Install Python requirements into virtualenv
+    ansible.builtin.pip:
+      virtualenv: /home/ubuntu/venv
+      requirements: /home/ubuntu/test/requirements.txt
+      state: forcereinstall
+    become_user: ubuntu
+
+  - name: Ensure ALLOWED_HOSTS contains wildcard
+    lineinfile:
+      path: /home/ubuntu/test/setup/settings.py
+      regexp: "ALLOWED_HOSTS"
+      line: 'ALLOWED_HOSTS = ["*"]'
+      backrefs: yes
+    become_user: ubuntu
+
+  - name: Run database migrations
+    shell: ". /home/ubuntu/venv/bin/activate; python /home/ubuntu/test/manage.py migrate"
+    become_user: ubuntu
+
+  - name: Load initial data fixtures
+    shell: ". /home/ubuntu/venv/bin/activate; python /home/ubuntu/test/manage.py loaddata clientes.json"
+    become_user: ubuntu
+
+  - name: Start Django development server in background (detached)
+    shell: ". /home/ubuntu/venv/bin/activate; nohup python /home/ubuntu/test/manage.py runserver 0.0.0.0:8000 &"
+    async: 45
+    poll: 0
+    become_user: ubuntu

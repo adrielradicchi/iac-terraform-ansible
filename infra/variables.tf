@@ -18,10 +18,22 @@ variable "name_group" {
   type = string
 }
 
+variable "name_group_tag" {
+  type = string
+}
+
 variable "min_size" {
   type = number
 }
 
 variable "max_size" {
   type = number
+}
+
+variable "production" {
+  type = bool
+}
+
+variable "name_autoscaling_group" {
+  type = string
 }
