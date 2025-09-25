@@ -36,7 +36,7 @@ resource "aws_autoscaling_group" "group" {
   name               = var.name_group
   min_size           = var.min_size
   max_size           = var.max_size
-  target_group_arns  = var.production ? [aws_lb_target_group.target_group_lb.arn] : []
+  target_group_arns  = var.production ? [aws_lb_target_group.target_group_lb[0].arn] : []
   launch_template {
     id      = aws_launch_template.machine.id
     version = "$Latest"
@@ -54,6 +54,7 @@ resource "aws_default_subnet" "subnet_2" {
 resource "aws_lb" "load_balancer" {
   internal = false
   subnets  = [aws_default_subnet.subnet_1.id, aws_default_subnet.subnet_2.id]
+  count    = var.production ? 1 : 0
 }
 
 resource "aws_default_vpc" "vpc_default" {
@@ -73,16 +74,18 @@ resource "aws_lb_target_group" "target_group_lb" {
     healthy_threshold   = 5
     unhealthy_threshold = 2
   }
+  count = var.production ? 1 : 0
 }
 
 resource "aws_lb_listener" "listener_lb" {
-  load_balancer_arn = aws_lb.load_balancer.arn
+  load_balancer_arn = aws_lb.load_balancer[0].arn
   port              = "8000"
   protocol          = "HTTP"
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.target_group_lb.arn
+    target_group_arn = aws_lb_target_group.target_group_lb[0].arn
   }
+  count = var.production ? 1 : 0
 }
 
 resource "aws_autoscaling_policy" "scale-production" {
@@ -95,6 +98,7 @@ resource "aws_autoscaling_policy" "scale-production" {
     }
     target_value = 50.0
   }
+  count = var.production ? 1 : 0
 }
 
 # output "Public_IP" {

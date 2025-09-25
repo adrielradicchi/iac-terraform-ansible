@@ -33,7 +33,3 @@ variable "max_size" {
 variable "production" {
   type = bool
 }
-
-variable "name_autoscaling_group" {
-  type = string
-}
