@@ -1,6 +1,6 @@
 ### Terraform ###
 # Local .terraform directories
-**/.terraform/*
+**/.terraform
 
 # .tfstate files
 *.tfstate
@@ -37,3 +37,5 @@ terraform.rc
 *.pem
 IaC*
 *.lock.hcl
+**/__pycache__
+**/.ansible

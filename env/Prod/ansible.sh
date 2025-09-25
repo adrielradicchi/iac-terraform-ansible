@@ -1,3 +1,20 @@
+#!/bin/bash
+
+cd /home/ubuntu
+mkdir test
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+sudo python3 get-pip.py --break-system-packages
+sudo python3 -m pip install ansible --break-system-packages
+sudo apt install -y git ansible-core
+tee -a hosts.yml >/dev/null <<EOT
+terraform-ansible:
+ hosts:
+  localhost:
+   ansible_connection: local
+ vars:
+  ansible_user: ubuntu
+EOT
+tee -a playbook.yml >/dev/null <<EOT
 - hosts: terraform-ansible
   become: true
   tasks:
@@ -71,3 +88,6 @@
     async: 45
     poll: 0
     become_user: ubuntu
+EOT
+
+ansible-playbook /home/ubuntu/playbook.yml -i /home/ubuntu/hosts.yml
